@@ -12,7 +12,7 @@ from gfpgan.archs.gfpganv1_clean_arch import GFPGANv1Clean
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-class GFPGANer():
+class GFPGANer:
     """Helper for restoration with GFPGAN.
 
     It will detect and crop faces, and then resize the faces to 512x512.
@@ -28,14 +28,21 @@ class GFPGANer():
         bg_upsampler (nn.Module): The upsampler for the background. Default: None.
     """
 
-    def __init__(self, model_path, upscale=2, arch='clean', channel_multiplier=2, bg_upsampler=None):
+    def __init__(
+        self,
+        model_path,
+        upscale=2,
+        arch="clean",
+        channel_multiplier=2,
+        bg_upsampler=None,
+    ):
         self.upscale = upscale
         self.bg_upsampler = bg_upsampler
 
         # initialize model
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # initialize the GFP-GAN
-        if arch == 'clean':
+        if arch == "clean":
             self.gfpgan = GFPGANv1Clean(
                 out_size=512,
                 num_style_feat=512,
@@ -46,7 +53,8 @@ class GFPGANer():
                 input_is_latent=True,
                 different_w=True,
                 narrow=1,
-                sft_half=True)
+                sft_half=True,
+            )
         else:
             self.gfpgan = GFPGANv1(
                 out_size=512,
@@ -58,24 +66,30 @@ class GFPGANer():
                 input_is_latent=True,
                 different_w=True,
                 narrow=1,
-                sft_half=True)
+                sft_half=True,
+            )
         # initialize face helper
         self.face_helper = FaceRestoreHelper(
             upscale,
             face_size=512,
             crop_ratio=(1, 1),
-            det_model='retinaface_resnet50',
-            save_ext='png',
-            device=self.device)
+            det_model="retinaface_resnet50",
+            save_ext="png",
+            device=self.device,
+        )
 
-        if model_path.startswith('https://'):
+        if model_path.startswith("https://"):
             model_path = load_file_from_url(
-                url=model_path, model_dir=os.path.join(ROOT_DIR, 'gfpgan/weights'), progress=True, file_name=None)
+                url=model_path,
+                model_dir=os.path.join(ROOT_DIR, "gfpgan/weights"),
+                progress=True,
+                file_name=None,
+            )
         loadnet = torch.load(model_path)
-        if 'params_ema' in loadnet:
-            keyname = 'params_ema'
+        if "params_ema" in loadnet:
+            keyname = "params_ema"
         else:
-            keyname = 'params'
+            keyname = "params"
         self.gfpgan.load_state_dict(loadnet[keyname], strict=True)
         self.gfpgan.eval()
         self.gfpgan = self.gfpgan.to(self.device)
@@ -90,7 +104,9 @@ class GFPGANer():
         else:
             self.face_helper.read_image(img)
             # get face landmarks for each face
-            self.face_helper.get_face_landmarks_5(only_center_face=only_center_face, eye_dist_threshold=5)
+            self.face_helper.get_face_landmarks_5(
+                only_center_face=only_center_face, eye_dist_threshold=5
+            )
             # eye_dist_threshold=5: skip faces whose eye distance is smaller than 5 pixels
             # TODO: even with eye_dist_threshold, it will still introduce wrong detections and restorations.
             # align and warp each face
@@ -99,19 +115,23 @@ class GFPGANer():
         # face restoration
         for cropped_face in self.face_helper.cropped_faces:
             # prepare data
-            cropped_face_t = img2tensor(cropped_face / 255., bgr2rgb=True, float32=True)
+            cropped_face_t = img2tensor(
+                cropped_face / 255.0, bgr2rgb=True, float32=True
+            )
             normalize(cropped_face_t, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5), inplace=True)
             cropped_face_t = cropped_face_t.unsqueeze(0).to(self.device)
 
             try:
                 output = self.gfpgan(cropped_face_t, return_rgb=False)[0]
                 # convert to image
-                restored_face = tensor2img(output.squeeze(0), rgb2bgr=True, min_max=(-1, 1))
+                restored_face = tensor2img(
+                    output.squeeze(0), rgb2bgr=True, min_max=(-1, 1)
+                )
             except RuntimeError as error:
-                print(f'\tFailed inference for GFPGAN: {error}.')
+                print(f"\tFailed inference for GFPGAN: {error}.")
                 restored_face = cropped_face
 
-            restored_face = restored_face.astype('uint8')
+            restored_face = restored_face.astype("uint8")
             self.face_helper.add_restored_face(restored_face)
 
         if not has_aligned and paste_back:
@@ -124,7 +144,13 @@ class GFPGANer():
 
             self.face_helper.get_inverse_affine(None)
             # paste each restored face to the input image
-            restored_img = self.face_helper.paste_faces_to_input_image(upsample_img=bg_img)
-            return self.face_helper.cropped_faces, self.face_helper.restored_faces, restored_img
+            restored_img = self.face_helper.paste_faces_to_input_image(
+                upsample_img=bg_img
+            )
+            return (
+                self.face_helper.cropped_faces,
+                self.face_helper.restored_faces,
+                restored_img,
+            )
         else:
             return self.face_helper.cropped_faces, self.face_helper.restored_faces, None
