@@ -11,7 +11,7 @@ This provides a base conda environment with all the requirements for PyTorch and
 
 Original Image | Restored Image 
 :-------------------------:|:-------------------------:
-<img src="inputs/TOS-crew.jpg" alt="drawing" width="500"/> | <img src="restored-TOS-crew.jpg" alt="drawing" width="500"/>
+<img src="inputs/TOS-crew.jpg" alt="drawing" width="800"/> | <img src="restored-TOS-crew.jpg" alt="drawing" width="800"/>
 
 ## BibTeX
 
