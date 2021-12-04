@@ -1,0 +1,29 @@
+services:
+  inference:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint:
+      [
+        "python",
+        "/app/gfpgan/inference_gfpgan.py",
+        "--upscale=2",
+        "--model_path=/app/gfpgan/experiments/pretrained_models/GFPGANCleanv1-NoCE-C2.pth",
+        "--test_path=/app/gfpgan/inputs/whole_imgs/",
+        "--save_root=/app/gfpgan/results",
+      ]
+    volumes:
+      - type: bind
+        source: ./inputs
+        target: /app/gfpgan/inputs/whole_imgs/
+      - type: bind
+        source: ./results
+        target: /app/gfpgan/results/
+    image: tuttlebr/gfpgan:v0.2.3
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
