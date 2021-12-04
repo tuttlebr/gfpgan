@@ -139,4 +139,7 @@ dmypy.json
 .pyre/
 
 .vscode/
-results/
+results/cmp/
+results/cropped_faces/
+results/restored_faces/
+results/restored_imgs/
