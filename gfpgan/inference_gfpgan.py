@@ -45,7 +45,7 @@ def main():
         "--test_path", type=str, default="inputs/whole_imgs", help="Input folder"
     )
     parser.add_argument(
-        "--suffix", type=str, default="-gfpgan", help="Suffix of the restored faces"
+        "--suffix", type=str, default="restored", help="Suffix of the restored faces"
     )
     parser.add_argument(
         "--only_center_face", action="store_true", help="Only restore the center face"
