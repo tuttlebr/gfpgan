@@ -14,7 +14,7 @@ services:
       ]
     volumes:
       - type: bind
-        source: ./inputs
+        source:  /mnt/discovery/pictures/1989-2011-pics-of-james-tuttle/
         target: /app/gfpgan/inputs/whole_imgs/
       - type: bind
         source: ./results
